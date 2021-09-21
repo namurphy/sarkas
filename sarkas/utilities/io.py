@@ -1263,7 +1263,10 @@ class InputOutput:
 
 
 def alpha_to_int(text):
-    return int(text) if text.isdigit() else text
+    try:
+        return int(text)
+    except ValueError:
+        return text
 
 
 def num_sort(text):
