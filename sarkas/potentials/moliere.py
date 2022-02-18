@@ -79,7 +79,7 @@ def moliere_force(r, pot_matrix):
     U = 0.0
     force = 0.0
 
-    for i in range(int(len(pot_matrix[:-1]) / 2)):
+    for i in range(len(pot_matrix[:-1]) // 2):
         factor1 = r * pot_matrix[i + 4]
         factor2 = pot_matrix[i + 1] / r
         U += factor2 * np.exp(-factor1)

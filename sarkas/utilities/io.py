@@ -49,7 +49,7 @@ class InputOutput:
     def __init__(self, process: str = None):
         """Set default directory names."""
         self.__name__ = 'io'
-        self.process = process if process else 'preprocessing'
+        self.process = process or 'preprocessing'
         self.input_file = None
         self.equilibration_dir = 'Equilibration'
         self.production_dir = 'Production'
@@ -123,21 +123,17 @@ class InputOutput:
             keyed = 'Parameters'
             for key, value in dics[keyed].items():
 
-                if key == 'verbose':
-                    self.verbose = value
-
-                if key == 'magnetized':
-                    self.magnetized = value
-
                 if key == 'load_method':
                     self.load_method = value
-                    if value[-7:] == 'restart':
-                        self.restart = True
-                    else:
-                        self.restart = False
+                    self.restart = value[-7:] == 'restart'
+                elif key == 'magnetized':
+                    self.magnetized = value
 
-                if key == 'preprocessing':
+                elif key == 'preprocessing':
                     self.preprocessing = value
+
+                elif key == 'verbose':
+                    self.verbose = value
 
         if 'Integrator' in dics.keys():
             keyed = 'Integrator'
@@ -177,13 +173,7 @@ class InputOutput:
         self.postprocessing_dir = self.processes_dir[2]
 
         # Redirect to the correct process folder
-        if self.process == 'preprocessing':
-            indx = 0
-        else:
-            # Note that Postprocessing needs the link to simulation's folder
-            # because that is where I look for energy files and pickle files
-            indx = 1
-
+        indx = 0 if self.process == 'preprocessing' else 1
         # Equilibration directory and sub_dir
         self.equilibration_dir = os.path.join(self.processes_dir[indx], self.equilibration_dir)
         self.eq_dump_dir = os.path.join(self.equilibration_dir, 'dumps')
@@ -251,9 +241,8 @@ class InputOutput:
             if not os.path.exists(self.mag_dump_dir):
                 os.mkdir(self.mag_dump_dir)
 
-        if self.preprocessing:
-            if not os.path.exists(self.preprocessing_dir):
-                os.mkdir(self.preprocessing_dir)
+        if self.preprocessing and not os.path.exists(self.preprocessing_dir):
+            os.mkdir(self.preprocessing_dir)
 
         if not os.path.exists(self.postprocessing_dir):
             os.mkdir(self.postprocessing_dir)
@@ -612,9 +601,9 @@ class InputOutput:
                 # Header of process
                 process_title = '{:^80}'.format(self.process.capitalize())
                 print('\n\n')
-                print(*['*' for i in range(50)])
+                print(*['*' for _ in range(50)])
                 print(process_title)
-                print(*['*' for i in range(50)])
+                print(*['*' for _ in range(50)])
 
             elif observable == 'rdf':
                 simulation.rdf.pretty_print()
@@ -891,9 +880,6 @@ class InputOutput:
                 print('lambda_m = {:.6e} '.format(simulation.parameters.lambda_m), end='')
                 print("[cm]" if simulation.parameters.units == "cgs" else "[m]")
                 print('alpha = {:.4f}'.format(simulation.parameters.alpha))
-                # print('Theta = {:1.4e}'.format(simulation.parameters.electron_degeneracy_parameter))
-                print('b = {:.4f}'.format(simulation.parameters.b))
-
             else:
                 print('Oscillatory potential:')
                 print('gamma_p = {:.6e} '.format(simulation.parameters.gamma_p), end='')
@@ -901,7 +887,8 @@ class InputOutput:
                 print('gamma_m = {:.6e} '.format(simulation.parameters.gamma_m), end='')
                 print("[cm]" if simulation.parameters.units == "cgs" else "[m]")
                 print('alpha = {:.4f}'.format(simulation.parameters.alphap))
-                print('b = {:.4f}'.format(simulation.parameters.b))
+            # print('Theta = {:1.4e}'.format(simulation.parameters.electron_degeneracy_parameter))
+            print('b = {:.4f}'.format(simulation.parameters.b))
 
             print('Gamma_eff = {:4.2f}'.format(simulation.parameters.coupling_constant))
 
@@ -964,41 +951,62 @@ class InputOutput:
             # Create the Energy file
             dkeys = ["Time", "Total Energy", "Total Kinetic Energy", "Potential Energy", "Temperature"]
             if len(species) > 1:
-                for i, sp in enumerate(species):
-                    dkeys.append("{} Kinetic Energy".format(sp.name))
-                    dkeys.append("{} Temperature".format(sp.name))
+                for sp in species:
+                    dkeys.extend(
+                        (
+                            "{} Kinetic Energy".format(sp.name),
+                            "{} Temperature".format(sp.name),
+                        )
+                    )
+
             data = dict.fromkeys(dkeys)
 
             with open(self.prod_energy_filename, 'w+') as f:
                 w = csv.writer(f)
                 w.writerow(data.keys())
 
-        if not os.path.exists(self.eq_energy_filename) and not params.load_method[-7:] == 'restart':
+        if (
+            not os.path.exists(self.eq_energy_filename)
+            and params.load_method[-7:] != 'restart'
+        ):
             # Create the Energy file
             dkeys = ["Time", "Total Energy", "Total Kinetic Energy", "Potential Energy", "Temperature"]
             if len(species) > 1:
-                for i, sp_name in enumerate(params.species_names):
-                    dkeys.append("{} Kinetic Energy".format(sp_name))
-                    dkeys.append("{} Temperature".format(sp_name))
+                for sp_name in params.species_names:
+                    dkeys.extend(
+                        (
+                            "{} Kinetic Energy".format(sp_name),
+                            "{} Temperature".format(sp_name),
+                        )
+                    )
+
             data = dict.fromkeys(dkeys)
 
             with open(self.eq_energy_filename, 'w+') as f:
                 w = csv.writer(f)
                 w.writerow(data.keys())
 
-        if self.electrostatic_equilibration:
-            if not os.path.exists(self.mag_energy_filename) and not params.load_method[-7:] == 'restart':
-                # Create the Energy file
-                dkeys = ["Time", "Total Energy", "Total Kinetic Energy", "Potential Energy", "Temperature"]
-                if len(species) > 1:
-                    for i, sp_name in enumerate(params.species_names):
-                        dkeys.append("{} Kinetic Energy".format(sp_name))
-                        dkeys.append("{} Temperature".format(sp_name))
-                data = dict.fromkeys(dkeys)
+        if (
+            self.electrostatic_equilibration
+            and not os.path.exists(self.mag_energy_filename)
+            and params.load_method[-7:] != 'restart'
+        ):
+            # Create the Energy file
+            dkeys = ["Time", "Total Energy", "Total Kinetic Energy", "Potential Energy", "Temperature"]
+            if len(species) > 1:
+                for sp_name in params.species_names:
+                    dkeys.extend(
+                        (
+                            "{} Kinetic Energy".format(sp_name),
+                            "{} Temperature".format(sp_name),
+                        )
+                    )
 
-                with open(self.mag_energy_filename, 'w+') as f:
-                    w = csv.writer(f)
-                    w.writerow(data.keys())
+            data = dict.fromkeys(dkeys)
+
+            with open(self.mag_energy_filename, 'w+') as f:
+                w = csv.writer(f)
+                w.writerow(data.keys())
 
     def save_pickle(self, simulation):
         """
@@ -1007,18 +1015,11 @@ class InputOutput:
         file_list = ['parameters', 'integrator', 'thermostat', 'potential', 'species']
 
         # Redirect to the correct process folder
-        if self.process == 'preprocessing':
-            indx = 0
-        else:
-            # Note that Postprocessing needs the link to simulation's folder
-            # because that is where I look for energy files and pickle files
-            indx = 1
-
+        indx = 0 if self.process == 'preprocessing' else 1
         for fl in file_list:
-            filename = os.path.join(self.processes_dir[indx], fl + ".pickle")
-            pickle_file = open(filename, "wb")
-            pickle.dump(simulation.__dict__[fl], pickle_file)
-            pickle_file.close()
+            filename = os.path.join(self.processes_dir[indx], f'{fl}.pickle')
+            with open(filename, "wb") as pickle_file:
+                pickle.dump(simulation.__dict__[fl], pickle_file)
 
     def read_pickle(self, process):
         """
@@ -1034,15 +1035,9 @@ class InputOutput:
         file_list = ['parameters', 'integrator', 'thermostat', 'potential', 'species']
 
         # Redirect to the correct process folder
-        if self.process == 'preprocessing':
-            indx = 0
-        else:
-            # Note that Postprocessing needs the link to simulation's folder
-            # because that is where I look for energy files and pickle files
-            indx = 1
-
+        indx = 0 if self.process == 'preprocessing' else 1
         for fl in file_list:
-            filename = os.path.join(self.processes_dir[indx], fl + ".pickle")
+            filename = os.path.join(self.processes_dir[indx], f'{fl}.pickle')
             data = np.load(filename, allow_pickle=True)
             process.__dict__[fl] = py_copy.copy(data)
 
@@ -1064,13 +1059,7 @@ class InputOutput:
         import copy as py_copy
 
         # Redirect to the correct process folder
-        if self.process == 'preprocessing':
-            indx = 0
-        else:
-            # Note that Postprocessing needs the link to simulation's folder
-            # because that is where I look for energy files and pickle files
-            indx = 1
-
+        indx = 0 if self.process == 'preprocessing' else 1
         filename = os.path.join(self.processes_dir[indx], class_to_read + ".pickle")
         data = np.load(filename, allow_pickle=True)
         return py_copy.copy(data)
@@ -1170,41 +1159,38 @@ class InputOutput:
             self.xyz_filename = os.path.join(self.production_dir, "pva_" + self.job_id + '.xyz')
             dump_dir = self.prod_dump_dir
 
-        f_xyz = open(self.xyz_filename, "w+")
+        with open(self.xyz_filename, "w+") as f_xyz:
+            if not hasattr(self, 'a_ws'):
+                params = self.read_pickle_single('parameters')
+                self.a_ws = params.a_ws
+                self.total_num_ptcls = params.total_num_ptcls
+                self.total_plasma_frequency = params.total_plasma_frequency
 
-        if not hasattr(self, 'a_ws'):
-            params = self.read_pickle_single('parameters')
-            self.a_ws = params.a_ws
-            self.total_num_ptcls = params.total_num_ptcls
-            self.total_plasma_frequency = params.total_plasma_frequency
+            # Rescale constants. This is needed since OVITO has a small number limit.
+            pscale = 1.0 / self.a_ws
+            vscale = 1.0 / (self.a_ws * self.total_plasma_frequency)
+            ascale = 1.0 / (self.a_ws * self.total_plasma_frequency ** 2)
 
-        # Rescale constants. This is needed since OVITO has a small number limit.
-        pscale = 1.0 / self.a_ws
-        vscale = 1.0 / (self.a_ws * self.total_plasma_frequency)
-        ascale = 1.0 / (self.a_ws * self.total_plasma_frequency ** 2)
+            # Read the list of dumps and sort them in the correct (natural) order
+            dumps = os.listdir(dump_dir)
+            dumps.sort(key=num_sort)
+            for dump in tqdm(dumps, disable=not self.verbose):
+                data = self.read_npz(dump_dir, dump)
+                data["pos_x"] *= pscale
+                data["pos_y"] *= pscale
+                data["pos_z"] *= pscale
 
-        # Read the list of dumps and sort them in the correct (natural) order
-        dumps = os.listdir(dump_dir)
-        dumps.sort(key=num_sort)
-        for dump in tqdm(dumps, disable=not self.verbose):
-            data = self.read_npz(dump_dir, dump)
-            data["pos_x"] *= pscale
-            data["pos_y"] *= pscale
-            data["pos_z"] *= pscale
+                data["vel_x"] *= vscale
+                data["vel_y"] *= vscale
+                data["vel_z"] *= vscale
 
-            data["vel_x"] *= vscale
-            data["vel_y"] *= vscale
-            data["vel_z"] *= vscale
+                data["acc_x"] *= ascale
+                data["acc_y"] *= ascale
+                data["acc_z"] *= ascale
 
-            data["acc_x"] *= ascale
-            data["acc_y"] *= ascale
-            data["acc_z"] *= ascale
-
-            f_xyz.writelines("{0:d}\n".format(self.total_num_ptcls))
-            f_xyz.writelines("name x y z vx vy vz ax ay az\n")
-            np.savetxt(f_xyz, data, fmt="%s %.6e %.6e %.6e %.6e %.6e %.6e %.6e %.6e %.6e")
-
-        f_xyz.close()
+                f_xyz.writelines("{0:d}\n".format(self.total_num_ptcls))
+                f_xyz.writelines("name x y z vx vy vz ax ay az\n")
+                np.savetxt(f_xyz, data, fmt="%s %.6e %.6e %.6e %.6e %.6e %.6e %.6e %.6e %.6e")
 
     @staticmethod
     def read_npz(fldr, it):

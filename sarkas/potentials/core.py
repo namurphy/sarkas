@@ -138,7 +138,7 @@ class Potential:
 
         """
         # Check for cutoff radius
-        if not self.type.lower() == 'fmm':
+        if self.type.lower() != 'fmm':
             self.linked_list_on = True  # linked list on
             if not hasattr(self, "rc"):
                 print("\nWARNING: The cut-off radius is not defined. L/2 = {:1.4e} will be used as rc".format(
@@ -323,7 +323,7 @@ class Potential:
                                            self.rc, self.matrix, self.force,
                                            self.measure, ptcls.rdf_hist)
 
-        if not (self.type == "LJ"):
+        if self.type != "LJ":
             # Mie Energy of charged systems
             # J-M.Caillol, J Chem Phys 101 6080(1994) https: // doi.org / 10.1063 / 1.468422
             dipole = ptcls.charges @ ptcls.pos
@@ -342,7 +342,7 @@ class Potential:
         ptcls.potential_energy, ptcls.acc = force_pp.update_0D(ptcls.pos, ptcls.id, ptcls.masses, self.box_lengths,
                                                self.rc, self.matrix, self.force,
                                                self.measure, ptcls.rdf_hist)
-        if not (self.type == "LJ"):
+        if self.type != "LJ":
             # Mie Energy of charged systems
             # J-M.Caillol, J Chem Phys 101 6080(1994) https: // doi.org / 10.1063 / 1.468422
             dipole = ptcls.charges @ ptcls.pos

@@ -170,9 +170,13 @@ class Observable:
 
     def __repr__(self):
         sortedDict = dict(sorted(self.__dict__.items(), key=lambda x: x[0].lower()))
-        disp = 'Observable( ' + self.__class__.__name__ + '\n'
+        disp = f'Observable( {self.__class__.__name__}' + '\n'
         for key, value in sortedDict.items():
-            if not key in ['dataframe', 'dataframe_longitudinal', 'dataframe_transverse']:
+            if key not in [
+                'dataframe',
+                'dataframe_longitudinal',
+                'dataframe_transverse',
+            ]:
                 disp += "\t{} : {}\n".format(key, value)
         disp += ')'
         return disp
@@ -452,27 +456,25 @@ class Observable:
                 with pd.HDFStore(self.nkt_hdf_file, mode='r') as nkt_hfile:
                     metadata = nkt_hfile.get_storer('nkt').attrs.metadata
 
-                if metadata['no_slices'] == self.no_slices:
-                    # Check for the correct number of k values
-                    if metadata["angle_averaging"] == self.angle_averaging:
-                        # Check for the correct max harmonics
-                        comp = self.max_k_harmonics == metadata["max_k_harmonics"]
-                        if not comp.all():
-                            self.calc_kt_data(nkt_flag=True)
-                    else:
+                if (
+                    metadata['no_slices'] == self.no_slices
+                    and metadata["angle_averaging"] == self.angle_averaging
+                ):
+                    # Check for the correct max harmonics
+                    comp = self.max_k_harmonics == metadata["max_k_harmonics"]
+                    if not comp.all():
                         self.calc_kt_data(nkt_flag=True)
                 else:
                     self.calc_kt_data(nkt_flag=True)
-
-                # elif metadata['max_k_harmonics']
-                #
-                # if self.angle_averaging == nkt_data["angle_averaging"]:
-                #
-                #     comp = self.max_k_harmonics == nkt_data["max_harmonics"]
-                #     if not comp.all():
-                #         self.calc_kt_data(nkt_flag=True)
-                # else:
-                #     self.calc_kt_data(nkt_flag=True)
+                        # elif metadata['max_k_harmonics']
+                        #
+                        # if self.angle_averaging == nkt_data["angle_averaging"]:
+                        #
+                        #     comp = self.max_k_harmonics == nkt_data["max_harmonics"]
+                        #     if not comp.all():
+                        #         self.calc_kt_data(nkt_flag=True)
+                        # else:
+                        #     self.calc_kt_data(nkt_flag=True)
 
             except OSError:
                 self.calc_kt_data(nkt_flag=True)
@@ -484,18 +486,16 @@ class Observable:
                 with pd.HDFStore(self.vkt_hdf_file, mode='r') as vkt_hfile:
                     metadata = vkt_hfile.get_storer('vkt').attrs.metadata
 
-                if metadata['no_slices'] == self.no_slices:
-                    # Check for the correct number of k values
-                    if metadata["angle_averaging"] == self.angle_averaging:
-                        # Check for the correct max harmonics
-                        comp = self.max_k_harmonics == metadata["max_k_harmonics"]
-                        if not comp.all():
-                            self.calc_kt_data(vkt_flag=True)
-                    else:
+                if (
+                    metadata['no_slices'] == self.no_slices
+                    and metadata["angle_averaging"] == self.angle_averaging
+                ):
+                    # Check for the correct max harmonics
+                    comp = self.max_k_harmonics == metadata["max_k_harmonics"]
+                    if not comp.all():
                         self.calc_kt_data(vkt_flag=True)
                 else:
                     self.calc_kt_data(vkt_flag=True)
-
             except OSError:
                 self.calc_kt_data(vkt_flag=True)
 
@@ -711,9 +711,14 @@ class Observable:
 
         # Saving
         if figname:
-            fig.savefig(os.path.join(self.saving_dir, figname + '_' + self.job_id + '.png'))
+            fig.savefig(os.path.join(self.saving_dir, f'{figname}_{self.job_id}.png'))
         else:
-            fig.savefig(os.path.join(self.saving_dir, 'Plot_' + self.__name__ + '_' + self.job_id + '.png'))
+            fig.savefig(
+                os.path.join(
+                    self.saving_dir, f'Plot_{self.__name__}_{self.job_id}.png'
+                )
+            )
+
 
         if show:
             fig.show()
@@ -822,8 +827,9 @@ class CurrentCorrelationFunction(Observable):
         #                                             "Transverse_CurrentCorrelationFunction_" + self.job_id + '.csv')
 
         self.filename_hdf = os.path.join(
-            self.saving_dir,
-            "CurrentCorrelationFunction_" + self.job_id + '.h5')
+            self.saving_dir, f'CurrentCorrelationFunction_{self.job_id}.h5'
+        )
+
 
         # Update the attribute with the passed arguments
         self.__dict__.update(kwargs.copy())
