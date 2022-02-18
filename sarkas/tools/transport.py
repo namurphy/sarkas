@@ -85,14 +85,12 @@ class TransportCoefficient:
         print('\n\n{:=^70} \n'.format(' Electrical Conductivity '))
         coefficient = pd.DataFrame()
 
+        jc_acf = obs.ElectricCurrent()
+        jc_acf.setup(params, phase=phase, no_slices=no_slices, **kwargs)
         if compute_acf:
-            jc_acf = obs.ElectricCurrent()
-            jc_acf.setup(params, phase=phase, no_slices=no_slices, **kwargs)
             jc_acf.compute()
 
         else:
-            jc_acf = obs.ElectricCurrent()
-            jc_acf.setup(params, phase=phase, no_slices=no_slices, **kwargs)
             jc_acf.parse()
 
         # Print some info
@@ -117,8 +115,8 @@ class TransportCoefficient:
                 coefficient[sigma_str + "_slice {}".format(isl)] = sigma_ij[:]
 
         col_str = [sigma_str + "_slice {}".format(isl) for isl in range(jc_acf.no_slices)]
-        coefficient[sigma_str + "_Mean"] = coefficient[col_str].mean(axis=1)
-        coefficient[sigma_str + "_Std"] = coefficient[col_str].std(axis=1)
+        coefficient[f'{sigma_str}_Mean'] = coefficient[col_str].mean(axis=1)
+        coefficient[f'{sigma_str}_Std'] = coefficient[col_str].std(axis=1)
 
         coefficient.columns = pd.MultiIndex.from_tuples([tuple(c.split("_")) for c in coefficient.columns])
         coefficient.to_hdf(
@@ -158,7 +156,13 @@ class TransportCoefficient:
             xlims = (xmul * time[1], xmul * time[-1] * 1.5)
 
             ax1.set(xlim=xlims, xscale='log', ylabel=r'Electric Current ACF', xlabel=r"Time difference" + xlbl)
-            ax2.set(xlim=xlims, xscale='log', ylabel=r'Conductivity' + ylbl, xlabel=r"$\tau$" + xlbl)
+            ax2.set(
+                xlim=xlims,
+                xscale='log',
+                ylabel=f'Conductivity{ylbl}',
+                xlabel=r"$\tau$" + xlbl,
+            )
+
 
             ax1.legend(loc='best')
             ax2.legend(loc='best')

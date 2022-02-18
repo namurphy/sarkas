@@ -66,7 +66,7 @@ class Process:
         self.parameters = Parameters()
         self.particles = Particles()
         self.species = []
-        self.input_file = input_file if input_file else None
+        self.input_file = input_file or None
         self.timer = SarkasTimer()
         self.io = InputOutput(process=self.__name__)
 
@@ -237,13 +237,13 @@ class Process:
             assert isinstance(other_inputs, dict), "Wrong input type. other_inputs should be a nested dictionary"
 
             for class_name, class_attr in other_inputs.items():
-                if class_name not in ['Particles', 'Obervables']:
-                    self.__dict__[class_name.lower()].__dict__.update(class_attr)
-                else:
+                if class_name in ['Particles', 'Obervables']:
                     for sp, species in enumerate(other_inputs["Particles"]):
                         spec = Species(species["Species"])
                         self.species[sp].__dict__.update(spec.__dict__)
 
+                else:
+                    self.__dict__[class_name.lower()].__dict__.update(class_attr)
                 if class_name == 'Observables':
 
                     for observable in class_attr:

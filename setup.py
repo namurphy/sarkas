@@ -97,7 +97,7 @@ with open(DESCRIPTION_FILE, "r") as fh:
     long_description = fh.read()
 
 # Treat everything in scripts as a script to be installed
-scripts = [fname for fname in glob.glob(os.path.join('scripts', '*'))]
+scripts = list(glob.glob(os.path.join('scripts', '*')))
 
 setuptools.setup(
     name=PACKAGENAME,  # Replace with your own username

@@ -33,7 +33,7 @@ intersphinx_mapping = {
 # -- Project information -----------------------------------------------------
 project = 'Sarkas'
 author = 'MurilloGroup'
-copyright = '2019-2021, ' + author
+copyright = f'2019-2021, {author}'
 
 # The full version, including alpha/beta/rc tags
 release = '1.0.0'
@@ -135,7 +135,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 html_theme_options = {
     # Navigation bar title. (Default: ``project`` value)
     'navbar_title': "ARKAS",
-    
+
     # Bootswatch (http://bootswatch.com/) theme.
     #
     # Options are nothing with "" (default) or the name of a valid theme such
@@ -143,17 +143,17 @@ html_theme_options = {
     #
     # Note that this is served off CDN, so won't be available offline.
     'bootswatch_theme': "flatly",
-    
+
     # Choose Bootstrap version.
     # Values: "3" (default) or "2" (in quotes)
     'bootstrap_version': "3",
-    
+
     'body_max_width': '100%',
-    
+
     # Render the next and previous page links in navbar. (Default: true)
     'navbar_sidebarrel': False,
 
-    
+
     'navbar_links': [
         ("Get Started", "documentation/get_started"),
         ("Examples","examples/examples"),

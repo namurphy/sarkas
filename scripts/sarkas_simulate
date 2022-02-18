@@ -12,6 +12,7 @@ Dept. of Computational Mathematics, Science, and Engineering,
 Michigan State University
 """
 
+
 # Python modules
 from optparse import OptionParser
 # Sarkas modules
@@ -72,7 +73,7 @@ if any([options.rand_seed, options.restart]):
 
     if options.restart:
         phase, step = options.restart.split('_')
-        args["Parameters"]["load_method"] = phase + '_restart'
+        args["Parameters"]["load_method"] = f'{phase}_restart'
         args["Parameters"]["restart_step"] = int(step)
 
 if args:
